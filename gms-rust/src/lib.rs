@@ -5,8 +5,8 @@ use chrono::{NaiveTime, Duration};
 #[derive(Debug)]
 struct Airport {
     name: String,
-    terminals: HashMap<String, Terminal>, //HashSet<RefCell<Terminal>>, //Solucion, cambiar HashSet a HashMap para poder modificar el Value.
-    runways: HashMap<String, Runway>,     // Mas adelante volver a mejorarlo con un RefCell en el HashSet.
+    terminals: HashMap<String, Terminal>, 
+    runways: HashMap<String, Runway>,   
     flights: HashSet<Rc<Flight>>, 
     valid_airlines: HashMap<String, Airline>,
 
@@ -34,17 +34,6 @@ impl Airport {
 
     fn add_airlines(&mut self, airlines: Vec<Airline>) {
         self.valid_airlines.extend(airlines.into_iter().map(|a| (a.name.clone(), a)));
-        // VALID BUT THE ABOVE WAS SHORTER
-        /* //airlines.push(Airline::new("OXAIR")); ESTO REQUIERE mut airlines: Vec<Airline>
-        for airline in airlines {  // POR QUE NO PIDE QUE AIRLINES SEA mut SI ESTA MOVE TODOS LOS VALORES??
-                                           // creo que porque into_iter() no hace nada por si solo, y airlinE es mut
-            self.valid_airlines.insert(airline);
-            //airline.name = "Hi".to_string(); NO DEJA PORQUE AIRLINE NO ES MUT.
-                                                    // Se puede hacer for mut airline in airlines !!
-
-                            //Creo que la solucion es que los owned not-mut si son movibles!
-                            // SI! PROBADO! SE PUEDE MOVER non-mut Y MOVE OUT of non-mut. Pero no se puede modificar
-        } */
     }
     fn add_flights(&mut self, flights: Vec<Rc<Flight>>) -> Vec<Rc<Flight>> {
         let mut flights_not_added = Vec::new();
@@ -58,10 +47,8 @@ impl Airport {
             }
         }
         flights_not_added
-        //self.flights.extend(flights);
     }
     fn add_terminals(&mut self, terminals: Vec<Terminal>) {
-        //self.terminals.extend(terminals); 
         self.terminals.extend(terminals.into_iter().map(|t| (t.name.clone(), t)));
     }
     fn add_gate(&mut self, gate: Gate, terminal: &str) -> bool {
@@ -75,7 +62,6 @@ impl Airport {
         }
     }
     fn add_runways(&mut self, runways: Vec<Runway>){
-        //self.runways.extend(runways);
         self.runways.extend(runways.into_iter().map(|r| (r.name.clone(), r)));
     }
 }
@@ -111,16 +97,12 @@ impl Bookable for Terminal {
 
 trait Bookable {
     fn book(&mut self, flight: &Flight) -> Option<Rc<Booking>>;
-    //fn booking_priority_cmp
 }
 impl<T> Bookable for HashMap<String, T> 
 where T: Bookable {
     fn book(&mut self, flight: &Flight) -> Option<Rc<Booking>> {
         let mut prioritized_bookables: Vec<&mut T> = self.values_mut().collect();
-        //vec.sort_by(|a, b| );
-        //prioritized_bookables.iter().find_map(|t| t.borrow_mut().book(flight))
         prioritized_bookables.iter_mut().find_map(|t| t.book(flight))
-        //self.values().find_map(|t| t.book(flight))
     }
 }
 
@@ -199,7 +181,6 @@ impl Bookable for Runway {
 
 }
 impl Runway {
-    //const MAX_CIRCULATION_BEFORE_LANDING: u8 = 30;
     const INTERLANDING_GAP: i64 = 5;
 
     fn new(name: String, length: RunwayLength) -> Runway {
@@ -323,7 +304,6 @@ impl PartialOrd for Booking {
     }
 }
 impl Booking {
-    //fn fits_between(&self, left: Option<&Booking>, right: Option<&&Rc<Booking>>) -> bool {
     fn fits_between(&self, left: Option<&Rc<Booking>>, right: Option<&Rc<Booking>>) -> bool {
         match (left, right) {
             (Some(left), Some(right)) => left.to <= self.from && self.to <= right.from,
@@ -380,8 +360,8 @@ mod tests {
 
     #[test]
     fn create_airlines_different_names() {
-        let mut ap = Airport::new("Oxford Airport");   //El mut es por el .add que tomaa &mut self
-        let mut airlines = Vec::new();                  //El mut es por el .push, NO por el add
+        let mut ap = Airport::new("Oxford Airport");  
+        let mut airlines = Vec::new();                 
         airlines.push(Airline::new("OXAIR"));
         airlines.push(Airline::new("BRITISH"));
         airlines.push(Airline::new("FLYCAM"));
@@ -391,7 +371,6 @@ mod tests {
         let airlines_to_check = airlines.clone();
 
         ap.add_airlines(airlines);
-        //ap.name = "Hi".to_string(); // ******************* DEJA! Quiza necesta estar behind mod !!
         assert!(airlines_to_check.iter().all(|item| ap.valid_airlines.contains_key(&item.name)));
         assert_eq!(ap.valid_airlines.len(), 5);
     }
